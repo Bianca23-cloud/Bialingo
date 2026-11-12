@@ -112,6 +112,12 @@ async def run_engine(p, engine, base):
         browser = await p.chromium.launch(args=['--no-sandbox'], **kw)
         ctx = await browser.new_context(viewport={'width': 390, 'height': 844}, service_workers='allow')
     print(f'\n=== Navigateur : {engine} ===')
+    if engine == 'webkit':
+        # WebKit applique « upgrade-insecure-requests » même sur localhost (http) : on retire cette seule consigne pour le test local.
+        async def strip(route):
+            r = await route.fetch()
+            await route.fulfill(response=r, body=(await r.text()).replace('upgrade-insecure-requests', ''))
+        await ctx.route(re.compile(r'\.html(\?.*)?$'), strip)
     await ctx.add_init_script("window.__csp=[];document.addEventListener('securitypolicyviolation',e=>window.__csp.push(e.violatedDirective+' '+e.blockedURI));window.__dialog=0;")
     external, errors = [], []
     ctx.on('request', lambda r: external.append(r.url) if not r.url.startswith(base) and not r.url.startswith('data:') and not r.url.startswith('blob:') else None)
