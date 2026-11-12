@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'; upgrade-insecure-requests">
+<meta name="referrer" content="no-referrer">
+<title>Télécharger Bialingo</title>
+<meta name="description" content="Téléchargez Bialingo gratuitement pour Android, Windows 11 et iPhone. Logiciel libre, sans publicité, sans collecte de données.">
+<meta name="theme-color" content="#5263CF">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<main class="prose" id="main">
+  <p><a href="./" class="btn small">Ouvrir Bialingo</a></p>
+  <h1>Télécharger Bialingo</h1>
+  <p class="muted">Gratuit, illimité, sans publicité, sans compte et sans collecte de données. Logiciel libre sous licence MIT : le code est public et vérifiable.</p>
+
+  <div class="dl">
+    <section class="card" id="android" aria-labelledby="h-android">
+      <h2 id="h-android">Android</h2>
+      <p><a class="btn primary" id="apk" href="https://github.com/__REPO__/releases/latest/download/Bialingo.apk">Télécharger l'application (APK)</a></p>
+      <ol>
+        <li>Touchez le bouton ci-dessus depuis votre téléphone.</li>
+        <li>Ouvrez le fichier téléchargé.</li>
+        <li>Si Android le demande, autorisez « Installer des applis inconnues » pour Chrome, puis touchez Installer.</li>
+      </ol>
+      <p class="muted">L'application n'a pas accès à Internet, ni aux contacts, et fonctionne hors ligne. Le micro n'est demandé que si vous faites un exercice de prononciation (facultatif). Bientôt aussi sur Google Play.</p>
+    </section>
+
+    <section class="card" id="windows" aria-labelledby="h-windows">
+      <h2 id="h-windows">Windows 11</h2>
+      <p><a class="btn primary" id="exe" href="https://github.com/__REPO__/releases/latest/download/Bialingo-Windows-Setup.exe">Télécharger et installer (.exe)</a></p>
+      <ol>
+        <li>Cliquez sur le bouton ci-dessus, puis ouvrez le fichier téléchargé.</li>
+        <li>Si Windows affiche « Windows a protégé votre ordinateur » : cliquez sur « Informations complémentaires », puis « Exécuter quand même ».</li>
+        <li>L'installation se fait toute seule, en un clic : l'icône Bialingo (l'abeille) apparaît sur le Bureau et dans le menu Démarrer. Elle fonctionne hors ligne.</li>
+      </ol>
+      <p class="muted">Sans installation : <a id="exep" href="https://github.com/__REPO__/releases/latest/download/Bialingo-Windows-portable.exe">Bialingo-Windows-portable.exe</a>. Linux : <a id="appimage" href="https://github.com/__REPO__/releases/latest/download/Bialingo-Linux.AppImage">AppImage</a> ou <a id="deb" href="https://github.com/__REPO__/releases/latest/download/Bialingo-Linux.deb">.deb</a>.</p>
+    </section>
+
+    <section class="card" id="ios" aria-labelledby="h-ios">
+      <h2 id="h-ios">iPhone 13 et iPad</h2>
+      <p><a class="btn primary" href="./">Ouvrir Bialingo dans Safari</a></p>
+      <ol>
+        <li>Ouvrez ce lien dans Safari (pas dans une autre application).</li>
+        <li>Touchez Partager (carré avec une flèche vers le haut). Sous iOS 26, il est dans le menu « … » à côté de l'adresse.</li>
+        <li>Touchez « Sur l'écran d'accueil ».</li>
+        <li>Sous iOS 26 : laissez activé l'interrupteur qui ouvre le site comme une application web.</li>
+        <li>Touchez Ajouter. L'icône Bialingo apparaît sur l'écran d'accueil.</li>
+      </ol>
+      <p class="muted">L'App Store d'Apple exige un compte développeur payant : l'installation par Safari est gratuite et donne la même application.</p>
+    </section>
+
+    <section class="card" id="verify" aria-labelledby="h-verify">
+      <h2 id="h-verify">Vérifier le fichier Android</h2>
+      <p>Chaque version est fabriquée automatiquement et publiquement par GitHub Actions à partir du code source, puis signée.</p>
+      <ol>
+        <li>Téléchargez <a id="sums" href="https://github.com/__REPO__/releases/latest/download/SHA256SUMS.txt">SHA256SUMS.txt</a>.</li>
+        <li>Sous Windows (PowerShell) : <code class="hash">Get-FileHash Bialingo.apk</code></li>
+        <li>Les deux empreintes doivent être identiques.</li>
+      </ol>
+    </section>
+  </div>
+
+  <p class="row"><a href="https://github.com/__REPO__" id="src" rel="noopener noreferrer">Code source</a> · <a href="confidentialite.html">Confidentialité</a> · <a href="mentions-legales.html">Mentions légales</a></p>
+</main>
+<script src="dl.js"></script>
+</body>
+</html>

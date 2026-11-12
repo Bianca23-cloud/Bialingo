@@ -1,0 +1,30 @@
+Bialingo est une application libre et gratuite pour apprendre vite et bien, seul ou en famille.
+
+8 LANGUES ET VARIANTES
+Anglais britannique, portugais du Brésil, italien, allemand, grec moderne, espagnol d'Espagne, du Mexique et d'Argentine. Chaque variante a son vocabulaire propre (coche, carro ou auto).
+
+MATHS ET ÉCONOMIE
+Calcul mental, pourcentages, fractions, équations, TVA, intérêts simples et composés. Exercices générés à l'infini, avec la correction expliquée étape par étape.
+
+ÉCHECS
+Les pièces et les règles, les coordonnées de l'échiquier, des problèmes de mat en un coup sur un échiquier interactif.
+
+MUSIQUE ET SOLFÈGE
+Lecture des notes en clé de sol et en clé de fa, rythme, intervalles à l'oreille, gammes et altérations.
+
+POUR AVANCER PLUS VITE
+• Test Turbo : validez une unité entière d'un coup si vous la connaissez déjà.
+• Révision intelligente : vos erreurs reviennent au bon moment jusqu'à être retenues.
+• Une astuce de professeur pour chaque unité.
+
+EN FAMILLE
+Jusqu'à 8 profils sur le même appareil, avec un classement de la semaine.
+
+ACCESSIBLE
+Texte agrandissable, couleurs douces et contrastées, mode sombre, utilisable au clavier et avec un lecteur d'écran.
+
+RESPECT DE LA VIE PRIVÉE
+Aucun compte, aucune publicité, aucun achat intégré, aucune collecte de données, aucun accès Internet. Seule autorisation, facultative : le micro, pour les exercices de prononciation. Tout fonctionne hors ligne et reste sur votre appareil.
+
+LOGICIEL LIBRE
+Code source public sous licence MIT. Bialingo est une application indépendante, non affiliée à d'autres applications d'apprentissage.

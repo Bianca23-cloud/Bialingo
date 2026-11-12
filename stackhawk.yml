@@ -1,0 +1,18 @@
+# Scan de sécurité dynamique (DAST) StackHawk — facultatif, nécessite un compte StackHawk et HAWK_API_KEY.
+# Lancement : python -m http.server -d web 8000  puis  APP_HOST=http://localhost:8000 hawk scan
+app:
+  applicationId: ${HAWK_APP_ID:00000000-0000-0000-0000-000000000000}
+  env: ${APP_ENV:Development}
+  host: ${APP_HOST:http://localhost:8000}
+hawk:
+  spider:
+    base: true
+    ajax: true
+    seedPaths:
+      - /index.html
+      - /telecharger.html
+      - /confidentialite.html
+      - /mentions-legales.html
+tags:
+  - name: _STACKHAWK_AGENT
+    value: ${HAWK_AGENT:none}

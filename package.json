@@ -1,0 +1,22 @@
+{
+  "name": "bialingo",
+  "version": "3.0.0",
+  "description": "Application libre d'apprentissage : langues, maths et économie, échecs, musique. Gratuite, sans publicité, sans collecte de données.",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "test": "python3 tests/test_app.py",
+    "android:web": "python3 tools/prepare_android.py web",
+    "android:native": "python3 tools/prepare_android.py native"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.0.0",
+    "@capacitor/core": "^8.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.0.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

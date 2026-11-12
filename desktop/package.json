@@ -1,0 +1,30 @@
+{
+  "name": "bialingo",
+  "productName": "Bialingo",
+  "version": "3.0.0",
+  "description": "Bialingo : langues, maths, échecs et musique. Gratuit, hors ligne, sans publicité.",
+  "main": "main.js",
+  "author": "Bianca C.",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist:win": "electron-builder --win nsis portable --publish never",
+    "dist:linux": "electron-builder --linux AppImage deb --publish never"
+  },
+  "devDependencies": {
+    "electron": "33.2.1",
+    "electron-builder": "25.1.8"
+  },
+  "build": {
+    "appId": "io.github.bianca23cloud.bialingo",
+    "productName": "Bialingo",
+    "files": ["main.js", "app/**"],
+    "icon": "app/icon.png",
+    "directories": { "output": "dist" },
+    "win": { "target": ["nsis", "portable"] },
+    "nsis": { "oneClick": true, "perMachine": false, "createDesktopShortcut": true, "createStartMenuShortcut": true, "shortcutName": "Bialingo", "artifactName": "Bialingo-Windows-Setup.${ext}" },
+    "portable": { "artifactName": "Bialingo-Windows-portable.${ext}" },
+    "linux": { "target": ["AppImage", "deb"], "category": "Education", "maintainer": "Bianca C.", "artifactName": "Bialingo-Linux.${ext}" }
+  }
+}

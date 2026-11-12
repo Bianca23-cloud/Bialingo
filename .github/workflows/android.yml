@@ -1,0 +1,277 @@
+# Fabrique les applications à télécharger, les vérifie, puis les publie dans « Releases » (liens directs) :
+#   - Android : Bialingo.apk (+ Bialingo.aab pour Google Play si la clé de signature est configurée),
+#     vérifiée (signature, au plus l'autorisation du micro, empreintes SHA-256, démarrage réel sur un émulateur) ;
+#   - Windows 11 : Bialingo-Windows-Setup.exe (installation en un clic) et Bialingo-Windows-portable.exe ;
+#   - Linux : Bialingo-Linux.AppImage et Bialingo-Linux.deb.
+# Déclenchement : à chaque envoi sur la branche main, à chaque étiquette vX.Y.Z, ou à la main (onglet Actions).
+name: Applications (Android, Windows, Linux)
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Compiler et vérifier
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    outputs:
+      signed: ${{ steps.sign.outputs.signed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: android-actions/setup-android@v3
+      - name: Outils Android (SDK 36)
+        run: sdkmanager --install "platforms;android-36" "build-tools;36.0.0" > /dev/null
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Voix natives enregistrées (cache)
+        uses: actions/cache@v4
+        with:
+          path: web/audio
+          key: voix-${{ hashFiles('tools/audio_texts.json', 'tools/make_audio.py') }}
+          restore-keys: voix-
+      - name: Voix natives enregistrées (une voix neuronale par langue)
+        shell: bash
+        run: |
+          python -m pip install --quiet edge-tts
+          python tools/make_audio.py
+      - name: Dépendances
+        run: |
+          npm install --no-audit --no-fund
+          npm install --no-audit --no-fund @capacitor-community/text-to-speech \
+            || echo "::warning::Extension de synthèse vocale non installée : les exercices d'écoute seront remplacés par des exercices de lecture."
+          npm install --no-audit --no-fund @capacitor-community/speech-recognition \
+            || echo "::warning::Extension de reconnaissance vocale non installée : la prononciation passera en mode enregistrement et auto-évaluation."
+          python3 -m pip install --quiet pillow
+      - name: Projet Android
+        env:
+          VERSION_CODE: ${{ github.run_number }}
+          VERSION_NAME: ${{ github.ref_type == 'tag' && github.ref_name || '3.0.0' }}
+        run: |
+          python3 tools/prepare_android.py web
+          find build-android -type f \( -name '*.html' -o -name '*.js' \) -exec sed -i "s#__REPO__#${{ github.repository }}#g" {} +
+          npx cap add android
+          python3 tools/prepare_android.py native
+          npx cap sync android
+      - name: Clé de signature
+        id: sign
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/bialingo.jks"
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Aucune clé de signature configurée : seul un APK de test est produit."
+          fi
+      - name: Compilation
+        working-directory: android
+        env:
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          SIGNED: ${{ steps.sign.outputs.signed }}
+        run: |
+          chmod +x gradlew
+          if [ "$SIGNED" = "true" ]; then
+            ./gradlew --no-daemon assembleRelease bundleRelease \
+              -Pandroid.injected.signing.store.file="$RUNNER_TEMP/bialingo.jks" \
+              -Pandroid.injected.signing.store.password="$KS_PASS" \
+              -Pandroid.injected.signing.key.alias=bialingo \
+              -Pandroid.injected.signing.key.password="$KS_PASS"
+          else
+            ./gradlew --no-daemon assembleDebug
+          fi
+      - name: Vérifications (signature, autorisations, empreintes)
+        env:
+          SIGNED: ${{ steps.sign.outputs.signed }}
+        run: |
+          rm -f "$RUNNER_TEMP/bialingo.jks"
+          mkdir -p dist
+          if [ "$SIGNED" = "true" ]; then
+            cp android/app/build/outputs/apk/release/app-release.apk dist/Bialingo.apk
+            cp android/app/build/outputs/bundle/release/app-release.aab dist/Bialingo.aab
+          else
+            cp android/app/build/outputs/apk/debug/app-debug.apk dist/Bialingo.apk
+          fi
+          BT="$ANDROID_HOME/build-tools/36.0.0"
+          for apk in dist/*.apk; do
+            "$BT/apksigner" verify --verbose --print-certs "$apk"
+            "$BT/aapt2" dump xmltree --file AndroidManifest.xml "$apk" > manifest.txt
+            # Seules les autorisations système demandées (uses-permission android.permission.*) comptent ;
+            # la permission interne propre à l'application, ajoutée par AndroidX, n'en est pas une.
+            "$BT/aapt2" dump permissions "$apk" | tee permissions.txt
+            # Seule autorisation permise : le micro (RECORD_AUDIO), pour les exercices de prononciation. Jamais Internet.
+            grep "^uses-permission: name='android\.permission\." permissions.txt | grep -v "android\.permission\.RECORD_AUDIO'" > perms.txt || true
+            if [ -s perms.txt ]; then echo "::error::Autorisation Android inattendue :"; cat perms.txt; exit 1; fi
+            if grep -q "android\.permission\.INTERNET'" permissions.txt; then echo "::error::Accès Internet interdit"; exit 1; fi
+            if grep -q 'debuggable.*0xffffffff' manifest.txt && [ "$SIGNED" = "true" ]; then echo "::error::Version publiée en mode débogage"; exit 1; fi
+            if [ "$SIGNED" != "true" ]; then echo "::warning::Clé de signature absente : APK installable signé avec une clé de test. Ajoutez les secrets pour Google Play."; fi
+            echo "Autorisations vérifiées (au plus le micro, jamais Internet) : OK"
+          done
+          (cd dist && sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bialingo-android
+          path: dist/
+          retention-days: 30
+
+  emulator:
+    name: Démarrage réel sur un émulateur Android
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: bialingo-android
+          path: dist
+      - name: Accélération matérielle
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          script: bash tools/smoke_android.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: capture-emulateur
+          path: smoke/
+
+  desktop:
+    name: Windows et Linux
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: dist:win
+          - os: ubuntu-latest
+            target: dist:linux
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Voix natives enregistrées (cache)
+        uses: actions/cache@v4
+        with:
+          path: web/audio
+          key: voix-${{ hashFiles('tools/audio_texts.json', 'tools/make_audio.py') }}
+          restore-keys: voix-
+      - name: Voix natives enregistrées (une voix neuronale par langue)
+        shell: bash
+        run: |
+          python -m pip install --quiet edge-tts
+          python tools/make_audio.py
+      - name: Application hors ligne en un seul fichier
+        shell: bash
+        run: |
+          mkdir -p desktop/app
+          python tools/build_single.py desktop/app/index.html --desktop
+          sed -i "s#__REPO__#${{ github.repository }}#g" desktop/app/index.html
+          cp web/icons/icon-512.png desktop/app/icon.png
+          cp -r web/audio desktop/app/audio
+      - name: Fabrication
+        working-directory: desktop
+        shell: bash
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: |
+          npm install --no-audit --no-fund
+          npm run ${{ matrix.target }}
+          ls -la dist
+      - name: Vérification
+        shell: bash
+        run: |
+          mkdir -p out
+          for f in desktop/dist/Bialingo-Windows-Setup.exe desktop/dist/Bialingo-Windows-portable.exe desktop/dist/Bialingo-Linux.AppImage desktop/dist/Bialingo-Linux.deb; do
+            if [ -f "$f" ]; then cp "$f" out/; fi
+          done
+          ls out | grep -q . || { echo "::error::Aucun fichier fabriqué"; exit 1; }
+          (cd out && sha256sum * | tee SHA256SUMS-${{ runner.os }}.txt)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bialingo-${{ runner.os }}
+          path: out/
+          retention-days: 30
+
+  release:
+    name: Publier (téléchargement direct)
+    needs: [build, emulator, desktop]
+    if: github.ref_type == 'tag' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: bialingo-*
+          merge-multiple: true
+      - name: Empreintes
+        run: |
+          ls -la dist
+          (cd dist && rm -f SHA256SUMS*.txt && sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt)
+      - name: Attestation de provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: 'dist/Bialingo*'
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || 'v3.0.0' }}
+          name: Bialingo ${{ github.ref_type == 'tag' && github.ref_name || 'v3.0.0' }}
+          make_latest: true
+          fail_on_unmatched_files: false
+          files: |
+            dist/Bialingo.apk
+            dist/Bialingo.aab
+            dist/Bialingo-Windows-Setup.exe
+            dist/Bialingo-Windows-portable.exe
+            dist/Bialingo-Linux.AppImage
+            dist/Bialingo-Linux.deb
+            dist/SHA256SUMS.txt
+          body: |
+            **Windows 11 : Bialingo-Windows-Setup.exe** (installation en un clic, avec raccourci sur le Bureau) ou Bialingo-Windows-portable.exe (sans installation).
+            **Android : Bialingo.apk** (installation directe, gratuite). **Linux : Bialingo-Linux.AppImage** ou .deb.
+            **iPhone / iPad :** https://bianca23-cloud.github.io/Bialingo/ dans Safari › Partager › Sur l'écran d'accueil.
+
+            - Aucun accès Internet, aucune publicité, aucune collecte de données, fonctionne hors ligne. Seule autorisation : le micro, demandé uniquement pour les exercices de prononciation.
+            - Fabriqué et vérifié automatiquement à partir de ce code source (signature, autorisations, démarrage sur émulateur).
+            - Vérification : comparez l'empreinte SHA-256 avec SHA256SUMS.txt, ou `gh attestation verify Bialingo.apk -R ${{ github.repository }}`.
