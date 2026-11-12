@@ -237,6 +237,22 @@ jobs:
           npm install --no-audit --no-fund
           npm run ${{ matrix.target }}
           ls -la dist
+      - name: Démarrage réel sous Windows (application et installation en un clic)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath "desktop\dist\win-unpacked\Bialingo.exe" -PassThru
+          Start-Sleep -Seconds 20
+          if ($p.HasExited) { Write-Host "::error::Bialingo s'est fermee au demarrage"; exit 1 }
+          Write-Host "Bialingo tourne sous Windows (fenetre : $((Get-Process -Id $p.Id).MainWindowTitle))"
+          Stop-Process -Id $p.Id -Force
+          Start-Process -FilePath "desktop\dist\Bialingo-Windows-Setup.exe" -ArgumentList "/S" -Wait
+          Start-Sleep -Seconds 5
+          $exe = Get-ChildItem "$env:LOCALAPPDATA\Programs" -Recurse -Filter "Bialingo.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $exe) { Write-Host "::error::Installation en un clic : Bialingo.exe introuvable"; exit 1 }
+          Write-Host "Installation en un clic reussie : $($exe.FullName)"
+          $lnk = Join-Path ([Environment]::GetFolderPath('Desktop')) 'Bialingo.lnk'
+          Write-Host "Raccourci sur le Bureau : $(Test-Path $lnk)"
       - name: Vérification
         shell: bash
         run: |
