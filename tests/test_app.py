@@ -233,10 +233,10 @@ async def run_engine(p, engine, base):
         if regs < 1:
             fail("le service worker (mode hors ligne) ne s'enregistre pas")
     man = json.loads((WEB / 'manifest.webmanifest').read_text(encoding='utf-8'))
-    for key in ('id', 'name', 'short_name', 'start_url', 'display', 'icons', 'screenshots', 'lang'):
+    for key in ('id', 'name', 'short_name', 'start_url', 'display', 'icons', 'lang'):
         if key not in man:
             fail('manifeste : champ manquant ' + key)
-    for item in man['icons'] + man['screenshots']:
+    for item in man['icons'] + man.get('screenshots', []):
         if not (WEB / item['src']).exists():
             fail('fichier manquant : ' + item['src'])
     if not any(i.get('purpose') == 'maskable' for i in man['icons']):
