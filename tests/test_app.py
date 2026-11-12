@@ -121,7 +121,11 @@ async def run_engine(p, engine, base):
     pg.on('dialog', lambda d: (errors.append('boîte de dialogue inattendue : ' + d.message), asyncio.ensure_future(d.dismiss())))
     await pg.goto(base + 'index.html?selftest')
     # Premier lancement : écran de bienvenue, chacun écrit son prénom (aucun prénom imposé)
-    await pg.wait_for_selector('#nameform')
+    try:
+        await pg.wait_for_selector('#nameform')
+    except Exception:
+        print('ERREURS DE LA PAGE :', errors[:8], '| CSP :', await pg.evaluate('window.__csp'), '| page :', (await pg.evaluate('document.body.innerText'))[:300], flush=True)
+        raise
     await pg.click('#nameform button[type=submit]')
     if not await pg.evaluate("document.querySelector('#werr').textContent.length>0"):
         fail('bienvenue : un prénom vide doit être refusé')
