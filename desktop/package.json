@@ -4,7 +4,8 @@
   "version": "3.0.0",
   "description": "Bialingo : langues, maths, échecs et musique. Gratuit, hors ligne, sans publicité.",
   "main": "main.js",
-  "author": "Bianca C.",
+  "homepage": "https://github.com/Bianca23-cloud/Bialingo",
+  "author": { "name": "Bialingo", "email": "bialingo@users.noreply.github.com" },
   "license": "MIT",
   "private": true,
   "scripts": {
@@ -25,6 +26,6 @@
     "win": { "target": ["nsis", "portable"] },
     "nsis": { "oneClick": true, "perMachine": false, "createDesktopShortcut": true, "createStartMenuShortcut": true, "shortcutName": "Bialingo", "artifactName": "Bialingo-Windows-Setup.${ext}" },
     "portable": { "artifactName": "Bialingo-Windows-portable.${ext}" },
-    "linux": { "target": ["AppImage", "deb"], "category": "Education", "maintainer": "Bianca C.", "artifactName": "Bialingo-Linux.${ext}" }
+    "linux": { "target": ["AppImage", "deb"], "category": "Education", "maintainer": "Bialingo <bialingo@users.noreply.github.com>", "artifactName": "Bialingo-Linux.${ext}" }
   }
 }
