@@ -29,7 +29,7 @@ jobs:
           python -m playwright install --with-deps chromium webkit
       - name: Tests (moteur de Chrome/Edge/Android et moteur de Safari/iPhone 13)
         env:
-          BROWSERS: chromium,webkit
+          BROWSERS: webkit,chromium
         run: python tests/test_app.py
 
   pages:
