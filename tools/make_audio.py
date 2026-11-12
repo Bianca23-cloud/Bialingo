@@ -10,6 +10,12 @@ Usage (sur GitHub Actions) : pip install edge-tts && python tools/make_audio.py
 import asyncio, json, os, pathlib, sys
 import edge_tts
 
+for _f in (sys.stdout, sys.stderr):      # Windows : sortie en UTF-8 (sinon les messages accentués plantent)
+    try:
+        _f.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 OUT = ROOT / 'web' / 'audio'
 # Une voix native par langue et par pays (2e voix = secours, même langue et même pays)
